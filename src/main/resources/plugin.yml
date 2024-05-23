@@ -1,0 +1,4 @@
+name: AntiCriminal
+version: '${version}'
+main: com.csc.anticriminal.AntiCriminal
+api-version: '1.20'
