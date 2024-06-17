@@ -1,5 +1,6 @@
 package com.csc.anticriminal.event;
 
+import com.csc.anticriminal.AntiCriminal;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,8 +16,8 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
 
-import okhttp3.*;
 import com.google.gson.Gson;
+import okhttp3.*;
 
 import static org.bukkit.Bukkit.getLogger;
 
@@ -43,13 +44,6 @@ public class GetPlayerChat implements Listener {
         if (isCrimeChat(message)){
             // 카운트 1 증가
             map.put(uuid, map.get(uuid)+1);
-
-            if (map.get(uuid) >= 5){
-                String reason = "Aggressive/Criminal Chat. Contact the admin";
-                Duration d = Duration.ofDays(7);
-                p.banIp(reason, d, null, true);
-            }
-
             logMessage += " !criminal";
         }
 
@@ -57,21 +51,34 @@ public class GetPlayerChat implements Listener {
         else{
             // 카운트 -1
             map.put(uuid, map.get(uuid)-1);
+            if (map.get(uuid) < 0){
+                map.put(uuid, 0);
+            }
         }
 
         // debug
-        logMessage += map.get(uuid);
+        logMessage += " pts: "+map.get(uuid);
         // 로그에 사용자명-카운트 형식으로 남김
         logToFile(p.getName(), logMessage);
+
+        if (map.get(uuid) >= 5){
+            Bukkit.getScheduler().runTask(AntiCriminal.getInstance(), () -> kickPlayer(p));
+        }
     }
 
+    void kickPlayer(Player p){
+        String reason = "Aggressive/Criminal Chat. Contact the admin";
+        Duration d = Duration.ofDays(7);
+        p.banIp(reason, d, null, true);
+    }
     boolean isCrimeChat(String sentence){
         // http 통신
 
-        final String URL = "http://125.128.251.165:5001/predict_chat";
+        // debug: 모델 측 ngrok 서버를 껐다 켜면 URL 수정 후 재빌드해야 함.
+        final String URL = "https://7e4b-34-27-46-169.ngrok-free.app/predict_chat";
         OkHttpClient client = new OkHttpClient();
         Gson gson = new Gson();
-        boolean result;
+        boolean result = false;
 
         // 보낼 데이터
         String json = gson.toJson(new Sentence(sentence));
@@ -93,12 +100,11 @@ public class GetPlayerChat implements Listener {
             Value value = gson.fromJson(responseBody, Value.class);
             getLogger().info("Received value: " + value.getValue());
 
-            if (value.getValue() != 0) {result = true;}
-            else {result = false;}
+            result = value.getValue() != 0;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return true;
+        return result;
     }
 
     private void logToFile(String playerName, String message){
