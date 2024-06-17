@@ -19,6 +19,8 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:1.20.6-R0.1-SNAPSHOT"
+    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.3'
+    implementation 'com.google.code.gson:gson:2.8.9'
 }
 
 def targetJavaVersion = 21
@@ -45,5 +47,12 @@ processResources {
     filteringCharset 'UTF-8'
     filesMatching('plugin.yml') {
         expand props
+    }
+}
+
+jar {
+    destinationDirectory.set(file("C:\\Users\\besta\\Desktop\\anticrimial-server\\plugins"))
+    manifest {
+        attributes 'Main-Class': 'com.csc.anticriminal.AntiCriminal'
     }
 }
