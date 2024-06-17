@@ -26,6 +26,7 @@ public final class AntiCriminal extends JavaPlugin {
         getLogger().info("Plugin Disabled");
 
         // unban all player; debug
+        /*
         BanList banList = Bukkit.getBanList(BanList.Type.IP);
 
         for (Object entryObject : banList.getBanEntries()) {
@@ -34,6 +35,7 @@ public final class AntiCriminal extends JavaPlugin {
                 banList.pardon(entry.getTarget());
             }
         }
+        */
 
     }
 }

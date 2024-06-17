@@ -38,8 +38,8 @@ public class GetPlayerChat implements Listener {
             map.put(uuid, 0);
         }
 
-        String logMessage = "[" + time.toString() + "] " + p.getName() + ": " + message;
-        logMessage += "// " + Objects.requireNonNull(p.getAddress()).toString();
+        String logMessage = "[" + time.toString() + "] " + p.getName() +
+                " (" + Objects.requireNonNull(p.getAddress()).toString() + ") : " + message;
         // 채팅내역 검증
         if (isCrimeChat(message)){
             // 카운트 1 증가
@@ -55,15 +55,12 @@ public class GetPlayerChat implements Listener {
                 map.put(uuid, 0);
             }
         }
-
-        // debug
-        logMessage += " pts: "+map.get(uuid);
-        // 로그에 사용자명-카운트 형식으로 남김
-        logToFile(p.getName(), logMessage);
-
         if (map.get(uuid) >= 5){
             Bukkit.getScheduler().runTask(AntiCriminal.getInstance(), () -> kickPlayer(p));
+            logMessage += " !Banned!";
         }
+        // 로그에 사용자명-카운트 형식으로 남김
+        logToFile(p.getName(), logMessage);
     }
 
     void kickPlayer(Player p){
@@ -74,25 +71,20 @@ public class GetPlayerChat implements Listener {
     boolean isCrimeChat(String sentence){
         // http 통신
 
-        // debug: 모델 측 ngrok 서버를 껐다 켜면 URL 수정 후 재빌드해야 함.
-        final String URL = "https://7e4b-34-27-46-169.ngrok-free.app/predict_chat";
+        // flask 서버 재실행 시 URL 변동이 바뀌므로 변경 후 새로 빌드해야 함.
+        // 빌드 방법: 터미널에 ./gradlew shadowJar 입력
+        final String URL = "https://3d46-34-125-221-251.ngrok-free.app/predict_chat";
         OkHttpClient client = new OkHttpClient();
         Gson gson = new Gson();
         boolean result = false;
 
-        // 보낼 데이터
         String json = gson.toJson(new Sentence(sentence));
-
-        // JSON 요청 본문 생성
         RequestBody body = RequestBody.create(json, MediaType.get("application/json; charset=utf-8"));
-
-        // 요청 생성
         Request request = new Request.Builder()
                 .url(URL)
                 .post(body)
                 .build();
 
-        // 요청 실행 및 응답 처리
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
